@@ -520,11 +520,21 @@
             if (!currentProduct) return;
 
             if (currentProduct.name === "G3-162") {
-                // Show the 3D model
-                viewer3dContent.innerHTML = `
-                    <div class="sketchfab-embed-wrapper"> <iframe title="G3-162" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/adb8e0e6fddc49b8931003ee0e4db062/embed"> </iframe> <p style="font-size: 13px; font-weight: normal; margin: 5px; color: #4A4A4A;"> <a href="https://sketchfab.com/3d-models/g3-162-adb8e0e6fddc49b8931003ee0e4db062?utm_medium=embed&utm_campaign=share-popup&utm_content=adb8e0e6fddc49b8931003ee0e4db062" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;"> G3-162 </a> by <a href="https://sketchfab.com/mouhamedmachkour629?utm_medium=embed&utm_campaign=share-popup&utm_content=adb8e0e6fddc49b8931003ee0e4db062" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;"> Younhhh </a> on <a href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=adb8e0e6fddc49b8931003ee0e4db062" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;">Sketchfab</a></p></div>
-                `;
-            } else {
+    viewer3dContent.innerHTML = `
+        <div style="position: relative; width: 100%; padding-bottom: 70%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <iframe 
+                src="https://sketchfab.com/models/adb8e0e6fddc49b8931003ee0e4db062/embed"
+                frameborder="0"
+                allowfullscreen
+                mozallowfullscreen="true"
+                webkitallowfullscreen="true"
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+                style="position: absolute; top:0; left:0; width:100%; height:100%; border:none;">
+            </iframe>
+        </div>
+    `;
+}
+else {
                 // Show apology message
                 viewer3dContent.innerHTML = `
                     <div class="text-center text-white bg-black/20 p-8 rounded-lg">
