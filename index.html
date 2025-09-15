@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Marché</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE10+/Edge */
+            user-select: none;         /* Standard */
+        }
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .header {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #e2e8f0;
+            height: 60px;
+        }
+        .search-bar {
+            height: 40px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            padding-left: 38px; 
+            padding-right: 48px; 
+        }
+        .search-bar:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .product-card {
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+        }
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        /*  تأثير تكبير الصورة عند تمرير الفأرة فوق البطاقة */
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        .filter-sheet-backdrop {
+            background-color: rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease;
+        }
+        .filter-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            height: 40vh;
+            max-height: 450px;
+            border-radius: 14px 14px 0 0;
+            background: white;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+            border-top: 1px solid #e2e8f0;
+        }
+        .filter-sheet.show {
+            transform: translateY(0);
+        }
+        .filter-select {
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            height: 42px;
+            font-size: 14px;
+        }
+        .modal {
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+            border-radius: 10px;
+            height: 48px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+        .backdrop {
+            backdrop-filter: blur(5px);
+        }
+        .quantity-selector button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+        .quantity-selector button:hover {
+            background-color: #e2e8f0;
+        }
+        .quantity-selector span {
+            width: 40px;
+        }
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #f8fafc;
+            transition: transform 0.3s ease-in-out;
+        }
+        #imageViewerContent.swiping-out {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="header sticky top-0 z-40 flex items-center px-4">
+        <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <h1 class="text-xl font-semibold flex items-center">
+                <i class="fas fa-store text-blue-500 mr-2"></i>
+                Marché
+            </h1>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-5">
+        <!-- Search Bar -->
+        <div class="relative mb-5 flex items-center">
+            <input 
+                type="text" 
+                id="searchInput"
+                placeholder="Rechercher des produits..."
+                class="search-bar w-full"
+            >
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <button id="filterToggle" class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-gray-500 hover:text-blue-500">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+
+        <!-- Results Count -->
+        <div class="mb-4">
+            <p class="text-sm text-gray-500" id="resultsCount">Affichage de 6 produits</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="productsGrid">
+            <!-- Product cards will be inserted here -->
+        </div>
+    </main>
+
+    <!-- Filter Sheet -->
+    <div id="filterSheet" class="fixed inset-0 z-50 hidden" onclick="closeFilters()">
+        <div class="filter-sheet-backdrop absolute inset-0"></div>
+        <div class="filter-sheet absolute bottom-0 left-0 right-0" onclick="event.stopPropagation()">
+            <div class="p-4 h-full overflow-y-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-medium">Filtres</h2>
+                    <button onclick="closeFilters()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-3">
+                    <select id="sizeFilter" class="filter-select w-full px-3">
+                        <option value="">Toutes les tailles</option>
+                        <option value="36-40">36-40</option>
+                        <option value="40-44">40-44</option>
+                    </select>
+
+                    <select id="boxItemsFilter" class="filter-select w-full px-3">
+                        <option value="">Tous les conditionnements</option>
+                        <option value="24">24 pièces/boîte</option>
+                        <option value="36">36 pièces/boîte</option>
+                    </select>
+
+                    <button onclick="applyFilters()" class="btn-primary w-full py-2.5 text-sm">
+                        Appliquer les filtres
+                    </button>
+                    <button onclick="clearFilters()" class="btn-primary w-full py-2.5 text-sm bg-gray-500 hover:bg-gray-600">
+                        Effacer les filtres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 backdrop">
+        <div class="modal max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold" id="modalTitle"></h2>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="show3dViewer()" class="text-gray-500 hover:text-blue-500 p-1" title="Voir en 3D">
+                            <i class="fas fa-cube text-xl"></i>
+                        </button>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="relative mb-4">
+                    <div class="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden flex items-center justify-center">
+                        <img id="modalImage" src="" alt="Product Image" class="product-image cursor-pointer" onclick="showImageViewer()">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Prix par article</span>
+                        <span class="text-xl font-bold text-blue-600" id="modalPrice"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-gray-500 mb-1">Tailles disponibles</p>
+                            <p class="font-medium" id="modalSizes"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 mb-1">Articles par boîte</p>
+                            <p class="font-medium" id="modalBoxItems"></p>
+                        </div>
+                    </div>
+
+                    <div class="text-sm bg-gray-50 p-3 rounded-lg">
+                        <p class="text-gray-500 mb-2">Calcul du total</p>
+                        <div class="text-sm mb-3" id="boxPriceCalculation"></div>
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="font-medium">Quantité (boîtes)</p>
+                            <div class="flex items-center space-x-2 quantity-selector">
+                                <button onclick="updateQuantity(-1)"><i class="fas fa-minus"></i></button>
+                                <span id="quantity" class="text-center font-medium">1</span>
+                                <button onclick="updateQuantity(1)"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t pt-3">
+                            <p class="text-lg font-semibold">Total</p>
+                            <p class="text-lg font-bold text-blue-600" id="totalPrice"></p>
+                        </div>
+                    </div>
+
+                    <div class="text-sm">
+                        <p class="text-gray-500 mb-1">Description du produit</p>
+                        <p class="text-gray-800" id="modalDescription"></p>
+                    </div>
+
+                    <button onclick="orderWhatsApp()" class="whatsapp-btn w-full text-white flex items-center justify-center space-x-2">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>Commander via WhatsApp</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D Viewer Modal -->
+    <div id="3dViewerModal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black/50 backdrop-blur-lg">
+        <div id="3dViewerContent" class="w-full h-full flex flex-col items-center justify-center p-4">
+            <!-- Content will be injected here by JavaScript -->
+        </div>
+        <button onclick="close3dViewer()" class="absolute bottom-5 left-1/2 -translate-x-1/2 btn-primary px-8 py-3 text-lg font-semibold">
+            DONE
+        </button>
+    </div>
+
+    <!-- Full Screen Image Viewer -->
+    <div id="imageViewerModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-md" onclick="closeImageViewer(event)">
+        <div id="imageViewerContent" class="relative">
+            <img id="fullScreenImage" src="" alt="Image en plein écran" class="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl transition-transform duration-300 ease-in-out">
+        </div>
+    </div>
+
+    <script>
+        // Sample product data (price is per item)
+        const products = [
+            { 
+                id: 1, 
+                name: "AC-01", 
+                price: 3.54, 
+                sizes: "36-40", 
+                boxItems: 24, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956542/1757763310_rcxiz6.png", 
+                description: "Produit de haute qualité AC-01. Tailles disponibles de 36 à 40. Conditionné par 24 pièces par boîte." 
+            },
+            { 
+                id: 2, 
+                name: "90.11", 
+                price: 4.20, 
+                sizes: "40-44", 
+                boxItems: 24, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956542/90.11_40.44_z5rsky.png", 
+                description: "Modèle 90.11 exclusif. Tailles disponibles de 40 à 44. Conditionné par 24 pièces par boîte." 
+            },
+            { 
+                id: 3, 
+                name: "G3-162", 
+                price: 3.75, 
+                sizes: "36-40", 
+                boxItems: 24, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956542/G3._162_aygfsy.png", 
+                description: "Modèle G3-162 premium. Tailles disponibles de 36 à 40. Conditionné par 24 pièces par boîte." 
+            },
+            { 
+                id: 4, 
+                name: "AC-05", 
+                price: 4.50, 
+                sizes: "Taille unique", 
+                boxItems: 24, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956542/AC-05_1_t5cxnu.png", 
+                description: "Produit AC-05 polyvalent. Taille unique. Conditionné par 24 pièces par boîte." 
+            },
+            { 
+                id: 5, 
+                name: "5-99", 
+                price: 2.99, 
+                sizes: "36-40", 
+                boxItems: 36, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956541/5-99_2_x3nbb0.png", 
+                description: "Modèle économique 5-99. Tailles disponibles de 36 à 40. Conditionné par 36 pièces par boîte." 
+            },
+            { 
+                id: 6, 
+                name: "Modèle Exclusif", 
+                price: 5.25, 
+                sizes: "36-40", 
+                boxItems: 24, 
+                image: "https://res.cloudinary.com/deldp7wdi/image/upload/v1757956541/Generated_Image_September_04_2025_-_12_29AM_fxvvs9.jpg", 
+                description: "Modèle exclusif de haute qualité. Tailles disponibles de 36 à 40. Conditionné par 24 pièces par boîte." 
+            }
+        ];
+
+        let filteredProducts = [...products];
+        let currentProduct = null;
+        let currentQuantity = 1;
+
+        // New variables for Image Viewer
+        const imageViewerModal = document.getElementById('imageViewerModal');
+        const imageViewerContent = document.getElementById('imageViewerContent');
+        const fullScreenImage = document.getElementById('fullScreenImage');
+        let touchStartX = 0;
+        let touchCurrentX = 0;
+        let isSwiping = false;
+
+        // New variables for 3D Viewer
+        const viewer3dModal = document.getElementById('3dViewerModal');
+        const viewer3dContent = document.getElementById('3dViewerContent');
+
+        function createProductCard(product) {
+            const boxPrice = (product.price * product.boxItems).toFixed(0);
+            return `
+                <div class="product-card cursor-pointer" onclick="showProductDetails(${product.id})">
+                    <div class="relative aspect-square overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="product-image">
+                        <div class="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent flex items-end p-2.5">
+                            <h3 class="font-medium text-white text-sm truncate">${product.name}</h3>
+                        </div>
+                    </div>
+                    <div class="p-2.5">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-base font-bold text-blue-600">${boxPrice} MAD</span>
+                            <span class="text-xs text-gray-500">par boîte</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">Tailles: ${product.sizes}</p>
+                        <button class="w-full btn-primary text-xs py-1.5">Voir les détails</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-search text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Aucun produit ne correspond à vos critères</p>
+                        <button onclick="clearFilters()" class="btn-primary mt-3 text-xs px-3 py-1.5">Effacer les filtres</button>
+                    </div>
+                `;
+                resultsCount.textContent = 'Aucun produit trouvé';
+            } else {
+                grid.innerHTML = filteredProducts.map(createProductCard).join('');
+                resultsCount.textContent = `Affichage de ${filteredProducts.length} produit${filteredProducts.length !== 1 ? 's' : ''}`;
+            }
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const size = document.getElementById('sizeFilter').value;
+            const boxItems = document.getElementById('boxItemsFilter').value;
+
+            filteredProducts = products.filter(product => {
+                const matchesSearch = !searchTerm || 
+                    product.name.toLowerCase().includes(searchTerm) || 
+                    product.description.toLowerCase().includes(searchTerm);
+                const matchesSize = !size || product.sizes.includes(size);
+                const matchesBoxItems = !boxItems || product.boxItems.toString() === boxItems;
+                
+                return matchesSearch && matchesSize && matchesBoxItems;
+            });
+
+            renderProducts();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sizeFilter').value = '';
+            document.getElementById('boxItemsFilter').value = '';
+            filteredProducts = [...products];
+            renderProducts();
+            closeFilters();
+        }
+
+        function showProductDetails(productId) {
+            currentProduct = products.find(p => p.id === productId);
+            if (!currentProduct) return;
+
+            document.getElementById('modalTitle').textContent = currentProduct.name;
+            document.getElementById('modalPrice').textContent = `${currentProduct.price.toFixed(2)} MAD`;
+            document.getElementById('modalSizes').textContent = currentProduct.sizes;
+            document.getElementById('modalBoxItems').textContent = currentProduct.boxItems;
+            document.getElementById('modalDescription').textContent = currentProduct.description;
+            document.getElementById('modalImage').src = currentProduct.image;
+            
+            updateQuantity(0); // Reset and calculate for 1 box
+
+            document.getElementById('productModal').classList.remove('hidden');
+            document.getElementById('productModal').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function updateQuantity(change) {
+            if (change === 0) { // a reset call
+                currentQuantity = 1;
+            } else {
+                const newQuantity = currentQuantity + change;
+                if (newQuantity < 1) return;
+                currentQuantity = newQuantity;
+            }
+
+            if (!currentProduct) return;
+
+            const boxPrice = (currentProduct.price * currentProduct.boxItems);
+            const totalPrice = (boxPrice * currentQuantity);
+
+            document.getElementById('boxPriceCalculation').innerHTML = 
+                `${currentProduct.price.toFixed(2)} x ${currentProduct.boxItems} = <span class="font-bold">${boxPrice.toFixed(2)} MAD</span> par boîte`;
+            document.getElementById('quantity').textContent = currentQuantity;
+            document.getElementById('totalPrice').textContent = `${totalPrice.toFixed(2)} MAD`;
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.add('hidden');
+            document.getElementById('productModal').classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showFilters() {
+            const sheet = document.getElementById('filterSheet');
+            sheet.classList.remove('hidden');
+            setTimeout(() => {
+                sheet.querySelector('.filter-sheet').classList.add('show');
+            }, 10);
+        }
+
+        function closeFilters() {
+            const sheet = document.getElementById('filterSheet');
+            sheet.querySelector('.filter-sheet').classList.remove('show');
+            setTimeout(() => {
+                sheet.classList.add('hidden');
+            }, 300);
+        }
+        
+        function applyFilters() {
+            filterProducts();
+            closeFilters();
+        }
+
+        function orderWhatsApp() {
+            if (!currentProduct) return;
+
+            const boxPrice = (currentProduct.price * currentProduct.boxItems);
+            const totalPrice = (boxPrice * currentQuantity);
+            
+            const message = `Bonjour! Je suis intéressé(e) par la commande:\n\n📦 Produit: ${currentProduct.name}\n🔢 Quantité: ${currentQuantity} boîte(s)\n💰 Total: ${totalPrice.toFixed(2)} MAD\n\nVeuillez me fournir plus d'informations sur la disponibilité et la livraison.`;
+            
+            const whatsappUrl = `https://wa.me/212600000000?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function show3dViewer() {
+            if (!currentProduct) return;
+
+            if (currentProduct.name === "G3-162") {
+                // Show the 3D model
+                viewer3dContent.innerHTML = `
+                    <div class="w-full h-full max-w-4xl max-h-[80vh] rounded-lg overflow-hidden shadow-2xl bg-black/20">
+                        <iframe title="G3-162 3D Model" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share 
+                        src="https://sketchfab.com/models/90879a90807541f59c5a140134547953/embed?scrollwheel=0&ui_controls=1&ui_infos=0&ui_watermark=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_ar=0"
+                        class="w-full h-full"></iframe>
+                    </div>
+                `;
+            } else {
+                // Show apology message
+                viewer3dContent.innerHTML = `
+                    <div class="text-center text-white bg-black/20 p-8 rounded-lg">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-4 text-yellow-400"></i>
+                        <h3 class="text-2xl font-semibold mb-2">Désolé!</h3>
+                        <p>Le modèle 3D pour ce produit n'est pas encore disponible.</p>
+                    </div>
+                `;
+            }
+
+            viewer3dModal.classList.remove('hidden');
+            viewer3dModal.classList.add('flex');
+        }
+
+        function close3dViewer() {
+            viewer3dModal.classList.add('hidden');
+            viewer3dModal.classList.remove('flex');
+            viewer3dContent.innerHTML = ''; // Clear content to stop iframe
+        }
+
+        // --- Image Viewer Functions ---
+
+        function showImageViewer() {
+            if (!currentProduct) return;
+            fullScreenImage.src = currentProduct.image;
+            imageViewerModal.classList.remove('hidden');
+            imageViewerModal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Ensure body scroll is locked
+        }
+
+        function closeImageViewer(event) {
+            // Only close if the click is on the backdrop itself, not its children
+            if (event && event.target !== imageViewerModal) {
+                return;
+            }
+
+            imageViewerModal.classList.add('hidden');
+            imageViewerModal.classList.remove('flex');
+            
+            // Reset styles for the next time it opens
+            imageViewerContent.classList.remove('swiping-out');
+            imageViewerContent.style.transform = 'translateX(0px)';
+            imageViewerContent.style.opacity = '1';
+
+            // The main modal is still open, so we don't restore body scroll here.
+        }
+
+        function handleSwipeStart(e) {
+            isSwiping = true;
+            touchStartX = e.touches[0].clientX;
+            imageViewerContent.classList.remove('swiping-out'); // Disable transition for direct finger tracking
+        }
+
+        function handleSwipeMove(e) {
+            if (!isSwiping) return;
+            e.preventDefault(); // Prevent page scrolling while swiping image
+            touchCurrentX = e.touches[0].clientX;
+            const diffX = touchCurrentX - touchStartX;
+            
+            imageViewerContent.style.transform = `translateX(${diffX}px)`;
+            
+            const opacity = 1 - Math.abs(diffX) / (window.innerWidth / 1.5);
+            imageViewerContent.style.opacity = Math.max(0, opacity);
+        }
+
+        function handleSwipeEnd() {
+            if (!isSwiping) return;
+            isSwiping = false;
+            
+            const diffX = touchCurrentX - touchStartX;
+            const threshold = window.innerWidth / 4;
+
+            imageViewerContent.classList.add('swiping-out'); // Re-enable transition for the animation
+
+            if (Math.abs(diffX) > threshold) {
+                const direction = diffX > 0 ? 1 : -1;
+                imageViewerContent.style.transform = `translateX(${direction * window.innerWidth}px)`;
+                imageViewerContent.style.opacity = '0';
+                
+                setTimeout(() => { closeImageViewer(); }, 300);
+            } else {
+                imageViewerContent.style.transform = 'translateX(0px)';
+                imageViewerContent.style.opacity = '1';
+            }
+            
+            touchStartX = 0;
+            touchCurrentX = 0;
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterProducts);
+        document.getElementById('sizeFilter').addEventListener('change', filterProducts);
+        document.getElementById('boxItemsFilter').addEventListener('change', filterProducts);
+        document.getElementById('filterToggle').addEventListener('click', showFilters);
+
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Add event listeners for the new image viewer swipe
+        imageViewerContent.addEventListener('touchstart', handleSwipeStart, { passive: true });
+        imageViewerContent.addEventListener('touchmove', handleSwipeMove, { passive: false });
+        imageViewerContent.addEventListener('touchend', handleSwipeEnd);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close modals in order of appearance (top-most first)
+                if (!viewer3dModal.classList.contains('hidden')) {
+                    close3dViewer();
+                }
+                else if (!imageViewerModal.classList.contains('hidden')) {
+                    closeImageViewer();
+                } else {
+                    closeModal();
+                    closeFilters();
+                }
+            }
+        });
+
+        // Initial render
+        renderProducts();
+    </script>
+</body>
+</html>
